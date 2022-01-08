@@ -14,7 +14,7 @@ baseline_prob<-.0005
 prob_matrix<-matrix(baseline_prob,100,100)
 # create a while loop for iterations
 iteration<-0
-max_iterations<-99
+max_iterations<-98
 while(iteration<=max_iterations){
   iteration = iteration+1
   # create a matrix indicating new edges
@@ -80,16 +80,16 @@ while(iteration<=max_iterations){
   
   diff_dist_frame<-comparison_frame%>%
     group_by(node)%>%
-    summarise('node_connection_count' = mean(node_connection_count),
-              'connection_connection_count' = mean(connection_connection_count))%>%
+    summarise('node_connection_count' = median(node_connection_count),
+              'connection_connection_count' = median(connection_connection_count))%>%
     ungroup()%>%
     mutate(diff=node_connection_count-connection_connection_count)
   diff_dist<-diff_dist_frame%>%
     ggplot(aes(x=diff))+
     geom_density(fill='lightblue',alpha=.5)+
-    labs(x="Node connection-count minus average connection-count of node's connections",
+    labs(x="Node connection-count minus median connection-count of node's connections",
          y= "Density of node distribution",
-         title = "Distribution of differences between each node's connection-count and the\naverage connection-count of connected nodes")+
+         title = "Distribution of differences between each node's connection-count and the\nmedian connection-count of connected nodes")+
     # force limits to be symmetrical
     xlim(min(diff_dist_frame$diff),0-min(diff_dist_frame$diff))
   
@@ -100,17 +100,17 @@ while(iteration<=max_iterations){
            connection_connection_count = replace_na(connection_connection_count,0),
            connection=replace_na(connection,0))%>%
     group_by(nodes)%>%
-    summarise(node_connection_count = mean(node_connection_count),
-              connection_connection_count = mean(connection_connection_count))%>%
+    summarise(node_connection_count = median(node_connection_count),
+              connection_connection_count = median(connection_connection_count))%>%
     mutate(diff_str = case_when(node_connection_count==0~'unconnected node',
-      node_connection_count>connection_connection_count~'node more connected than its connections are',
-                                   node_connection_count==connection_connection_count~"node connections equal to connections' connections",
-                                   TRUE~'node less connected than its connections are'),
-      diff_factor = factor(diff_str,levels = c('node more connected than its connections are',
-                                               "node connections equal to connections' connections",
-                                               'node less connected than its connections are',
-                                               'unconnected node'
-                                               )))
+                                node_connection_count>connection_connection_count~'node more connected than its connections are',
+                                node_connection_count==connection_connection_count~"node connections equal to connections' connections",
+                                TRUE~'node less connected than its connections are'),
+           diff_factor = factor(diff_str,levels = c('node more connected than its connections are',
+                                                    "node connections equal to connections' connections",
+                                                    'node less connected than its connections are',
+                                                    'unconnected node'
+           )))
   
   graph_image<-graph%>%
     activate(nodes)%>%
@@ -130,7 +130,7 @@ while(iteration<=max_iterations){
   }else{
     iteration_str<-paste0(iteration)
   }
-  ggsave(file=paste0('images/image ',iteration_str,'.png'),p)
+  ggsave(file=paste0('med_images/image ',iteration_str,'.png'),p)
 }
-png_files <- list.files("images/", pattern = ".*png$", full.names = TRUE)
-gifski(png_files, gif_file = "100_iterations.gif", width = 800, height = 600, delay = 1)
+png_files <- list.files("med_images/", pattern = ".*png$", full.names = TRUE)
+gifski(png_files, gif_file = "100_iterations_median.gif", width = 800, height = 600, delay = 1)
